@@ -11,6 +11,8 @@
 #include "MassMovementFragments.h"
 #include "MassSignalSubsystem.h"
 
+#include "BHEnemyFragments.h"
+
 void UBulletInitializerProcessor::ConfigureQueries()
 {
 	EntityQuery.AddTagRequirement<FBulletTag>(EMassFragmentPresence::All);
@@ -111,11 +113,31 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 				return FVector::Dist(Location, EntityLocation) <= 50.f;
 			});
 
-			if (Entities.Num() > 0)
-			{
-				Entities.Add(Context.GetEntity(EntityIdx)); // Delete bullet as well
-				Context.Defer().DestroyEntities(Entities); 
+			TArray<FMassEntityHandle> EntitiesToDestroy;
+			if (Entities.Num() > 0) {
+				EntitiesToDestroy.Add(Context.GetEntity(EntityIdx));//destroy the bullet
 			}
+
+			for (FMassEntityHandle& EnemyEntity : Entities)
+			{
+				FBHEnemyFragment* EnemyFragment = EntityManager.GetFragmentDataPtr<FBHEnemyFragment>(EnemyEntity);
+
+				if (EnemyFragment)
+				{
+					EnemyFragment->Health -= 1;
+					if (GEngine)
+					{
+						GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red,
+							FString::Printf(TEXT("Enemy HP: %f"), EnemyFragment->Health));
+					}
+
+					if (EnemyFragment->Health <= 0)
+					{
+						EntitiesToDestroy.Add(EnemyEntity);
+					}
+				}
+			}
+				Context.Defer().DestroyEntities(EntitiesToDestroy);
 		}
 	});
 }
