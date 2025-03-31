@@ -4,6 +4,7 @@
 #include "MassFindResource.h"
 
 #include "MassCommonFragments.h"
+
 #include "MassSmartObjectHandler.h"
 #include "MassStateTreeExecutionContext.h"
 #include "StateTreeLinker.h"

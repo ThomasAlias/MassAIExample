@@ -113,8 +113,8 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 
 			if (Entities.Num() > 0)
 			{
-				Entities.Add(Context.GetEntity(EntityIdx));
-				Context.Defer().DestroyEntities(Entities); // Delete bullet as well
+				Entities.Add(Context.GetEntity(EntityIdx)); // Delete bullet as well
+				Context.Defer().DestroyEntities(Entities); 
 			}
 		}
 	});
