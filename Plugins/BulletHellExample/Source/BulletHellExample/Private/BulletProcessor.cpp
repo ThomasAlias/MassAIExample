@@ -125,12 +125,6 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 				if (EnemyFragment)
 				{
 					EnemyFragment->Health -= 1;
-					if (GEngine)
-					{
-						GEngine->AddOnScreenDebugMessage(-1, 2.0f, FColor::Red,
-							FString::Printf(TEXT("Enemy HP: %f"), EnemyFragment->Health));
-					}
-
 					if (EnemyFragment->Health <= 0)
 					{
 						EntitiesToDestroy.Add(EnemyEntity);
