@@ -42,3 +42,24 @@ public:
 	UPROPERTY(EditAnywhere)
 	FBulletFragment BulletFragment;
 };
+
+USTRUCT()
+struct FBulletPierceFragment : public FMassFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	float RemainingPierce = 1.f;
+};
+
+UCLASS()
+class UBulletPierceTrait : public UMassEntityTraitBase
+{
+	GENERATED_BODY()
+
+public:
+	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
+
+	UPROPERTY(EditAnywhere)
+	FBulletPierceFragment BulletPierceFragment;
+};

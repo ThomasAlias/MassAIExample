@@ -10,3 +10,8 @@ void UBulletTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, 
 	BuildContext.AddFragment(FConstStructView::Make(BulletFragment));
 	BuildContext.AddTag<FBulletTag>();
 }
+
+void UBulletPierceTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
+{
+	BuildContext.AddFragment(FConstStructView::Make(BulletPierceFragment));
+}

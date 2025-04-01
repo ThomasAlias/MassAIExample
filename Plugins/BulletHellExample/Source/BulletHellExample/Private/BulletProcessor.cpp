@@ -88,6 +88,7 @@ void UBulletCollisionProcessor::ConfigureQueries()
 {
 	EntityQuery.AddTagRequirement<FBulletTag>(EMassFragmentPresence::All);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddRequirement<FBulletPierceFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 	EntityQuery.AddSubsystemRequirement<UBulletHellSubsystem>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.RegisterWithProcessor(*this);
 }
@@ -98,10 +99,13 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 	{
 		auto BulletHellSubsystem = Context.GetSubsystem<UBulletHellSubsystem>();
 		auto TransformFragments = Context.GetFragmentView<FTransformFragment>();
+		auto BulletPierceFragments = Context.GetMutableFragmentView<FBulletPierceFragment>(); // maybe not working for optionnal frags
 		const int32 NumEntities = Context.GetNumEntities();
 		for (int EntityIdx = 0; EntityIdx < NumEntities; EntityIdx++)
 		{
 			auto& TransformFragment = TransformFragments[EntityIdx];
+			//auto& BulletPierceFragment = BulletPierceFragments[EntityIdx];
+			FBulletPierceFragment* BulletPierceFragment = EntityManager.GetFragmentDataPtr<FBulletPierceFragment>(Context.GetEntity(EntityIdx));
 			auto Location = TransformFragment.GetTransform().GetLocation();
 			
 			TArray<FMassEntityHandle> Entities;
@@ -114,7 +118,16 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 			});
 
 			TArray<FMassEntityHandle> EntitiesToDestroy;
-			if (Entities.Num() > 0) {
+			if (Entities.Num() > 0 && BulletPierceFragment) 
+			{
+				BulletPierceFragment->RemainingPierce = BulletPierceFragment->RemainingPierce-Entities.Num();
+				if (BulletPierceFragment->RemainingPierce +1 <= 0) 
+				{
+					EntitiesToDestroy.Add(Context.GetEntity(EntityIdx));//destroy the bullet
+				}
+			}
+			if (Entities.Num() > 0 && !BulletPierceFragment)
+			{
 				EntitiesToDestroy.Add(Context.GetEntity(EntityIdx));//destroy the bullet
 			}
 
