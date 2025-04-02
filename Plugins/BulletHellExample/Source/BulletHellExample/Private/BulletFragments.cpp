@@ -14,4 +14,6 @@ void UBulletTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, 
 void UBulletPierceTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const
 {
 	BuildContext.AddFragment(FConstStructView::Make(BulletPierceFragment));
+
+    BuildContext.AddSharedFragment(FSharedStruct::Make(BulletPierceUpgradeFragment));
 }

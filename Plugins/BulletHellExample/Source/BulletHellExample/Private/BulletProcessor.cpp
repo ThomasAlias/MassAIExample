@@ -18,7 +18,9 @@ void UBulletInitializerProcessor::ConfigureQueries()
 	EntityQuery.AddTagRequirement<FBulletTag>(EMassFragmentPresence::All);
 	EntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FBulletFragment>(EMassFragmentAccess::ReadOnly);
-	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite); 
+	EntityQuery.AddRequirement<FBulletPierceFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
+	EntityQuery.AddSharedRequirement<FBulletPierceUpgradeFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 	EntityQuery.AddSubsystemRequirement<UMassSignalSubsystem>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.RegisterWithProcessor(*this);
 	
@@ -41,7 +43,10 @@ void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManag
 		auto BulletFragments = Context.GetFragmentView<FBulletFragment>();
 		auto VelocityFragments = Context.GetMutableFragmentView<FMassVelocityFragment>();
 		auto TransformFragments = Context.GetMutableFragmentView<FTransformFragment>();
-		
+
+		const FBulletPierceUpgradeFragment& SharedPierceUpgrade = Context.GetSharedFragment<FBulletPierceUpgradeFragment>();
+		auto BulletPierceFragments = Context.GetMutableFragmentView<FBulletPierceFragment>();
+
 		const int32 NumEntities = Context.GetNumEntities();
 		for (int EntityIdx = 0; EntityIdx < NumEntities; EntityIdx++)
 		{
@@ -51,7 +56,7 @@ void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManag
 
 			VelocityFragment.Value = BulletFragment.Direction.GetSafeNormal() * BulletFragment.Speed;
 			TransformFragment.GetMutableTransform().SetLocation(BulletFragment.SpawnLocation);
-
+			BulletPierceFragments[EntityIdx].RemainingPierce = SharedPierceUpgrade.UpgradePierceLevel;
 			SignalSubsystem->DelaySignalEntityDeferred(Context, BulletHell::Signals::BulletDestroy, Context.GetEntity(EntityIdx), BulletFragment.Lifetime);
 		}
 	});
@@ -99,12 +104,11 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 	{
 		auto BulletHellSubsystem = Context.GetSubsystem<UBulletHellSubsystem>();
 		auto TransformFragments = Context.GetFragmentView<FTransformFragment>();
-		auto BulletPierceFragments = Context.GetMutableFragmentView<FBulletPierceFragment>(); // maybe not working for optionnal frags
+		auto BulletPierceFragments = Context.GetMutableFragmentView<FBulletPierceFragment>();
 		const int32 NumEntities = Context.GetNumEntities();
 		for (int EntityIdx = 0; EntityIdx < NumEntities; EntityIdx++)
 		{
 			auto& TransformFragment = TransformFragments[EntityIdx];
-			//auto& BulletPierceFragment = BulletPierceFragments[EntityIdx];
 			FBulletPierceFragment* BulletPierceFragment = EntityManager.GetFragmentDataPtr<FBulletPierceFragment>(Context.GetEntity(EntityIdx));
 			auto Location = TransformFragment.GetTransform().GetLocation();
 			
@@ -116,6 +120,20 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 				auto EntityLocation = EntityManager.GetFragmentDataPtr<FTransformFragment>(Entity)->GetTransform().GetLocation();
 				return FVector::Dist(Location, EntityLocation) <= 50.f;
 			});
+
+
+			//for (FMassEntityHandle& EnemyEntity : Entities)
+			//{
+			//	//Filter entity alreadyPierced here
+			//}
+
+			if (BulletPierceFragment)
+			{
+				Entities = Entities.FilterByPredicate([BulletPierceFragment](const FMassEntityHandle& EnemyEntity)
+					{
+						return !BulletPierceFragment->AlreadyPiercedEntities.Contains(EnemyEntity);// Only keep enemies that haven't already been pierced.
+					});
+			}
 
 			TArray<FMassEntityHandle> EntitiesToDestroy;
 			if (Entities.Num() > 0 && BulletPierceFragment) 
