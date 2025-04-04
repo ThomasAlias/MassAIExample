@@ -12,6 +12,7 @@
 #include "MassSignalSubsystem.h"
 
 #include "BHEnemyFragments.h"
+#include <BulletHellGameInstance.h>
 
 void UBulletInitializerProcessor::ConfigureQueries()
 {
@@ -37,6 +38,8 @@ void UBulletInitializerProcessor::Initialize(UObject& Owner)
 void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManager, FMassExecutionContext& Context,
                                                  FMassSignalNameLookup& EntitySignals)
 {
+
+
 	EntityQuery.ForEachEntityChunk(EntityManager, Context, [this](FMassExecutionContext& Context)
 	{
 		auto SignalSubsystem = Context.GetMutableSubsystem<UMassSignalSubsystem>();
@@ -56,7 +59,17 @@ void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManag
 
 			VelocityFragment.Value = BulletFragment.Direction.GetSafeNormal() * BulletFragment.Speed;
 			TransformFragment.GetMutableTransform().SetLocation(BulletFragment.SpawnLocation);
-			BulletPierceFragments[EntityIdx].RemainingPierce = SharedPierceUpgrade.UpgradePierceLevel;
+
+			if (UWorld* World = Context.GetWorld())
+			{
+				if (UBulletHellGameInstance* GI = Cast<UBulletHellGameInstance>(World->GetGameInstance()))
+				{
+					if (UUpgrades* Upgrades = GI->Upgrades)
+					{
+						BulletPierceFragments[EntityIdx].RemainingPierce = Upgrades->PierceLevel; //SharedPierceUpgrade.UpgradePierceLevel
+					}
+				}
+			}
 			SignalSubsystem->DelaySignalEntityDeferred(Context, BulletHell::Signals::BulletDestroy, Context.GetEntity(EntityIdx), BulletFragment.Lifetime);
 		}
 	});
@@ -120,12 +133,6 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 				auto EntityLocation = EntityManager.GetFragmentDataPtr<FTransformFragment>(Entity)->GetTransform().GetLocation();
 				return FVector::Dist(Location, EntityLocation) <= 50.f;
 			});
-
-
-			//for (FMassEntityHandle& EnemyEntity : Entities)
-			//{
-			//	//Filter entity alreadyPierced here
-			//}
 
 			if (BulletPierceFragment)
 			{
