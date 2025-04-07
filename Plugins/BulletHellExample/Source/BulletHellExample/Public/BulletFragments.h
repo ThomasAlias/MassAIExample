@@ -8,6 +8,7 @@
 #include "BulletFragments.generated.h"
 
 
+
 USTRUCT()
 struct FBulletFragment : public FMassFragment
 {
@@ -22,6 +23,9 @@ struct FBulletFragment : public FMassFragment
 
 	UPROPERTY(EditAnywhere)
 	float Lifetime = 5.f;
+
+	UPROPERTY()
+	TArray<FMassEntityHandle> AlreadyHitEntities;
 };
 
 USTRUCT()
@@ -29,6 +33,32 @@ struct FBulletTag : public FMassTag
 {
 	GENERATED_BODY()
 	
+};
+
+USTRUCT()
+struct FBulletChainFragment : public FMassFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	float RemainingChain = 1.f;
+
+	UPROPERTY()
+	TArray<FMassEntityHandle> AlreadyChainedEntities; //Used to prevent multiHit one same target //TODO DEPRECATE
+};
+
+
+
+USTRUCT()
+struct FBulletPierceFragment : public FMassFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	float RemainingPierce = 1.f;
+
+	UPROPERTY()
+	TArray<FMassEntityHandle> AlreadyPiercedEntities; //Used to prevent multiHit one same target // TODO DEPRECATE
 };
 
 UCLASS()
@@ -41,40 +71,14 @@ public:
 
 	UPROPERTY(EditAnywhere)
 	FBulletFragment BulletFragment;
-};
+	//------------------------------------------------------------------Damage upgrades------------------------------------------------------
 
-USTRUCT()
-struct FBulletPierceFragment : public FMassFragment
-{
-	GENERATED_BODY()
+	//------------------------------------------------------------------Speed upgrades------------------------------------------------------
 
-	UPROPERTY(EditAnywhere)
-	float RemainingPierce = 1.f;
+	//------------------------------------------------------------------Multi hit upgrades------------------------------------------------
 
 	UPROPERTY()
-	TArray<FMassEntityHandle> AlreadyPiercedEntities; //Used to prevent multiHit one same target
-};
-
-USTRUCT(BlueprintType)
-struct  FBulletPierceUpgradeFragment : public FMassSharedFragment
-{
-	GENERATED_BODY()
-
-public:
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Pierce Upgrade")
-	int32 UpgradePierceLevel = 0;
-};
-
-UCLASS()
-class UBulletPierceTrait : public UMassEntityTraitBase
-{
-	GENERATED_BODY()
-
-public:
-	virtual void BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, const UWorld& World) const override;
-
+	FBulletChainFragment BulletChainFragment;
 	UPROPERTY()//Change ReadWrite?
-	FBulletPierceFragment BulletPierceFragment;
-	UPROPERTY(EditAnywhere)
-	FBulletPierceUpgradeFragment BulletPierceUpgradeFragment;
+		FBulletPierceFragment BulletPierceFragment;
 };

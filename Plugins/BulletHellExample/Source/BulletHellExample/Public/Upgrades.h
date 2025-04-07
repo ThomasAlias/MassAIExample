@@ -16,4 +16,7 @@ class BULLETHELLEXAMPLE_API UUpgrades : public UObject
 public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
     int32 PierceLevel = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
+    int32 ChainLevel = 0;
 };
