@@ -34,7 +34,35 @@ struct FBulletTag : public FMassTag
 	GENERATED_BODY()
 	
 };
+//-----------------
+USTRUCT()
+struct FBulletDamageFragment : public FMassFragment
+{
+	GENERATED_BODY()
 
+	UPROPERTY(EditAnywhere)
+	float Damage = 1.f;
+};
+
+USTRUCT()
+struct FBulletCritChanceFragment : public FMassFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	float CritChance = 0.1f;
+};
+
+USTRUCT()
+struct FBulletCritDamageFragment : public FMassFragment
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere)
+	float CritDamage = 2.5f;
+};
+
+//-------------------
 USTRUCT()
 struct FBulletChainFragment : public FMassFragment
 {
@@ -72,6 +100,12 @@ public:
 	UPROPERTY(EditAnywhere)
 	FBulletFragment BulletFragment;
 	//------------------------------------------------------------------Damage upgrades------------------------------------------------------
+	UPROPERTY(EditAnywhere)
+	FBulletDamageFragment BulletDamageFragment;
+	UPROPERTY(EditAnywhere)
+	FBulletCritChanceFragment BulletCritChanceFragment;
+	UPROPERTY(EditAnywhere)
+	FBulletCritDamageFragment BulletCritDamageFragment;
 
 	//------------------------------------------------------------------Speed upgrades------------------------------------------------------
 

@@ -14,6 +14,16 @@ class BULLETHELLEXAMPLE_API UUpgrades : public UObject
     GENERATED_BODY()
 
 public:
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
+    int32 DamageLevel = 1;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
+    int32 CritChanceLevel = 0;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
+    int32 CritDamageLevel = 2;
+    //---------------------------
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
     int32 PierceLevel = 0;
 

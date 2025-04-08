@@ -23,6 +23,18 @@ void UBulletTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, 
 			{
 				BuildContext.AddFragment(FConstStructView::Make(BulletPierceFragment));
 			}
+			if (true) // we always have a dmg fragment
+			{
+				BuildContext.AddFragment(FConstStructView::Make(BulletDamageFragment));
+			}
+			if (Upgrades->CritChanceLevel > 0)
+			{
+				BuildContext.AddFragment(FConstStructView::Make(BulletCritChanceFragment));
+			}
+			if (Upgrades->CritDamageLevel > 0)
+			{
+				BuildContext.AddFragment(FConstStructView::Make(BulletCritDamageFragment));
+			}
 		}
 	}
 }
