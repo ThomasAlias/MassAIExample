@@ -60,8 +60,8 @@ void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManag
 			VelocityFragment.Value = BulletFragment.Direction.GetSafeNormal() * BulletFragment.Speed;
 			TransformFragment.GetMutableTransform().SetLocation(BulletFragment.SpawnLocation);
 
-			auto& BulletChainFragment = BulletChainFragments[EntityIdx];
-			auto& BulletPierceFragment = BulletPierceFragments[EntityIdx];
+			//auto& BulletChainFragment = BulletChainFragments[EntityIdx];
+			//auto& BulletPierceFragment = BulletPierceFragments[EntityIdx];
 
 			if (UWorld* World = Context.GetWorld())
 			{
@@ -117,7 +117,8 @@ void UBulletCollisionProcessor::ConfigureQueries()
 {
 	EntityQuery.AddTagRequirement<FBulletTag>(EMassFragmentPresence::All);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
-	EntityQuery.AddRequirement<FBulletFragment>(EMassFragmentAccess::ReadWrite);//TODO ensure we don't get write if not needed
+	EntityQuery.AddRequirement<FBulletFragment>(EMassFragmentAccess::ReadWrite);
+	EntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);//this is a lot to do in a single proc, maybe we don't want to do it when there is no chain?
 
 	EntityQuery.AddRequirement<FBulletPierceFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 	EntityQuery.AddRequirement<FBulletChainFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
@@ -132,6 +133,7 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 	{
 		auto BulletHellSubsystem = Context.GetSubsystem<UBulletHellSubsystem>();
 		auto TransformFragments = Context.GetFragmentView<FTransformFragment>();
+		auto VelocityFragments = Context.GetMutableFragmentView<FMassVelocityFragment>();
 		auto BulletFragments = Context.GetFragmentView<FBulletFragment>();
 
 		auto BulletPierceFragments = Context.GetMutableFragmentView<FBulletPierceFragment>();
@@ -152,13 +154,14 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 			TArray<FMassEntityHandle> Entities;
 			BulletHellSubsystem->GetHashGrid().Query(FBox::BuildAABB(Location, FVector(50.f)), Entities);
 
-			Entities = Entities.FilterByPredicate([&Location, &EntityManager](const FMassEntityHandle& Entity)
-			{
-				auto EntityLocation = EntityManager.GetFragmentDataPtr<FTransformFragment>(Entity)->GetTransform().GetLocation();
-				return FVector::Dist(Location, EntityLocation) <= 50.f;
-			});
+			//Entities = Entities.FilterByPredicate([&Location, &EntityManager](const FMassEntityHandle& Entity)
+			//{
+			//	auto EntityLocation = EntityManager.GetFragmentDataPtr<FTransformFragment>(Entity)->GetTransform().GetLocation();
+			//	return FVector::Dist(Location, EntityLocation) <= 50.f;
+			//});
 
-			TArray<FMassEntityHandle> ValidHitTargets;
+			TArray<FMassEntityHandle> HitTargets;
+			TArray<FMassEntityHandle> VicinityTargets;
 			for (const FMassEntityHandle& Entity : Entities)
 			{
 				auto* EnemyTransform = EntityManager.GetFragmentDataPtr<FTransformFragment>(Entity);
@@ -167,28 +170,25 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 				if (BulletFragment->AlreadyHitEntities.Contains(Entity))
 					continue;
 
-				if (Dist <= 50.f)
+				if (Dist <= 50.f)//Replace by bullet Size
 				{
-					ValidHitTargets.Add(Entity); // currently overlapping → apply damage
+					HitTargets.Add(Entity); // currently overlapping → apply damage
 				}
-				//else if (Dist <= 500.f) // some "chaining radius"
-				//{
-				//	PotentialNewTargets.Add(Entity); // maybe redirect bullet
-				//}
+				else if (Dist <= 500.f) // some "chaining radius"
+				{
+					VicinityTargets.Add(Entity); // maybe redirect bullet
+				}
 			}
-			Entities = ValidHitTargets;
+			Entities = HitTargets;
 
-			Entities = Entities.FilterByPredicate([BulletFragment](const FMassEntityHandle& EnemyEntity)
+			HitTargets = HitTargets.FilterByPredicate([BulletFragment](const FMassEntityHandle& EnemyEntity)
 			{
 				return !BulletFragment->AlreadyHitEntities.Contains(EnemyEntity);// Only keep enemies that haven't already been hit.
 			});
 
 			TArray<FMassEntityHandle> EntitiesToDestroy;
-			bool OutOfChain = !BulletChainFragment;//TODO Pas sûr, le but est d'init le bool sur true si le fragment existe pas
-			if (OutOfChain) {
-				UE_LOG(LogTemp, Warning, TEXT("OutOfChain true despite BulletChainFragment fragment present"));
-			}
-			float AvailableTargetsNumber = Entities.Num();
+			bool OutOfChain = !BulletChainFragment;
+			float AvailableTargetsNumber = HitTargets.Num();
 			int consumedTargets =0;
 			if (BulletChainFragment && AvailableTargetsNumber > 0)
 			{
@@ -197,7 +197,6 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 					OutOfChain = true;
 					consumedTargets = BulletChainFragment->RemainingChain;
 					BulletChainFragment->RemainingChain = 0;
-					UE_LOG(LogTemp, Warning, TEXT("CHAIN : Consumed %d targets, %f remaining Chain"), consumedTargets, BulletChainFragment->RemainingChain);
 				}
 				else 
 				{
@@ -224,14 +223,15 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 			}
 			if (AvailableTargetsNumber > 0 && OutOfChain && OutOfPierce)
 			{
-				UE_LOG(LogTemp, Warning, TEXT("Out of chain and Pierce, remaining targets: %f"), AvailableTargetsNumber);
 				EntitiesToDestroy.Add(Context.GetEntity(EntityIdx));//destroy the bullet
 			}
+			bool enemyHaveBeenHit = false;
+			//test true here if still not working
 
-			for (FMassEntityHandle& EnemyEntity : Entities)
+			for (FMassEntityHandle& EnemyEntity : HitTargets)
 			{
+				enemyHaveBeenHit = true;//Why do I have to put it here, it should work in the if(EnemyFragment), I mean if enemy loose hp then the code goes here
 				FBHEnemyFragment* EnemyFragment = EntityManager.GetFragmentDataPtr<FBHEnemyFragment>(EnemyEntity);
-
 				if (EnemyFragment)
 				{
 					EnemyFragment->Health -= 1;
@@ -244,6 +244,20 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 						BulletFragment->AlreadyHitEntities.Add(EnemyEntity);
 					}
 				}
+			}
+
+			if (BulletChainFragment && BulletChainFragment->RemainingChain > 0 && VicinityTargets.Num() > 0 && enemyHaveBeenHit)
+			{
+				const int32 Index = FMath::RandRange(0, VicinityTargets.Num() - 1);
+				FMassEntityHandle NewTarget = VicinityTargets[0];
+
+				const auto* TargetTransform = EntityManager.GetFragmentDataPtr<FTransformFragment>(NewTarget);
+				FVector NewDirection = (TargetTransform->GetTransform().GetLocation() - Location).GetSafeNormal();
+				NewDirection.Z = 0.f; 
+				BulletFragment->Direction = NewDirection;
+
+				FMassVelocityFragment& Velocity = VelocityFragments[EntityIdx];
+				Velocity.Value = NewDirection * BulletFragment->Speed;
 			}
 				Context.Defer().DestroyEntities(EntitiesToDestroy);
 		}
