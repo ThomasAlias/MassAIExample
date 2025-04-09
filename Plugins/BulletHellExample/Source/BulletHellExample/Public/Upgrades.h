@@ -29,4 +29,25 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
     int32 ChainLevel = 0;
+
+    UFUNCTION(BlueprintCallable)
+    void ResetUpgrade()
+    {
+        DamageLevel = 1;
+        CritChanceLevel = 0;
+        CritDamageLevel = 0;
+        PierceLevel = 1;
+        ChainLevel = 2;
+    }
+
+
+    UFUNCTION(BlueprintCallable)
+    void SetFromBlueprint(int32 InDamage, int32 InCritChance, int32 InCritDamage, int32 InChain, int32 InPierce)
+    {
+        DamageLevel = InDamage;
+        CritChanceLevel = InCritChance;
+        CritDamageLevel = InCritDamage;
+        PierceLevel = InPierce;
+        ChainLevel = InChain;
+    }
 };

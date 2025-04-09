@@ -7,6 +7,8 @@ void UBulletHellGameInstance::Init()
 {
 	Super::Init();
 
-	// Instantiate your Upgrades object
-	Upgrades = NewObject<UUpgrades>(this);
+	if (UpgradesClass)
+	{
+		UpgradesInstance = NewObject<UUpgrades>(this, UpgradesClass);
+	}
 }

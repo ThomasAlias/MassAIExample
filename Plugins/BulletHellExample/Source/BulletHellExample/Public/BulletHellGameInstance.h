@@ -16,8 +16,11 @@ class BULLETHELLEXAMPLE_API UBulletHellGameInstance : public UGameInstance
 	GENERATED_BODY()
 
 public:
-	UPROPERTY(BlueprintReadWrite, EditAnywhere)
-	TObjectPtr<UUpgrades> Upgrades;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly)
+	TSubclassOf<UUpgrades> UpgradesClass;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+	UUpgrades* UpgradesInstance;
 
 	virtual void Init() override;
 };

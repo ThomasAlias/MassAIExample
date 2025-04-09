@@ -79,7 +79,7 @@ void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManag
 			{
 				if (UBulletHellGameInstance* GI = Cast<UBulletHellGameInstance>(World->GetGameInstance()))
 				{
-					if (UUpgrades* Upgrades = GI->Upgrades)
+					if (UUpgrades* Upgrades = GI->UpgradesInstance)
 					{
 						BulletDamageFragments[EntityIdx].Damage = Upgrades->DamageLevel;
 						if (bHasCritChance)
