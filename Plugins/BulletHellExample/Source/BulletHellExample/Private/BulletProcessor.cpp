@@ -81,23 +81,23 @@ void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManag
 				{
 					if (UUpgrades* Upgrades = GI->UpgradesInstance)
 					{
-						BulletDamageFragments[EntityIdx].Damage = Upgrades->DamageLevel;
+						BulletDamageFragments[EntityIdx].Damage = *Upgrades->FinalStats.Find(EWeaponStatType::Damage);
 						if (bHasCritChance)
 						{
-							BulletCritChanceFragments[EntityIdx].CritChance = Upgrades->CritChanceLevel*0.25;
+							BulletCritChanceFragments[EntityIdx].CritChance = *Upgrades->FinalStats.Find(EWeaponStatType::CritChance);
 						}
 						if (bHasCritDamage)
 						{
-							BulletCritDamageFragments[EntityIdx].CritDamage = 2+Upgrades->CritDamageLevel*0.5;
+							BulletCritDamageFragments[EntityIdx].CritDamage = *Upgrades->FinalStats.Find(EWeaponStatType::CritDamage);
 						}
 						//-------------------
 						if (bHasChain)
 						{
-							BulletChainFragments[EntityIdx].RemainingChain = Upgrades->ChainLevel;
+							BulletChainFragments[EntityIdx].RemainingChain = *Upgrades->FinalStats.Find(EWeaponStatType::Chain);
 						}
 						if (bHasPierce)
 						{
-							BulletPierceFragments[EntityIdx].RemainingPierce = Upgrades->PierceLevel;
+							BulletPierceFragments[EntityIdx].RemainingPierce = *Upgrades->FinalStats.Find(EWeaponStatType::Pierce);
 						}
 					}
 				}
@@ -286,7 +286,7 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 				}
 			}
 
-			if (BulletChainFragment && BulletChainFragment->RemainingChain > 0 && VicinityTargets.Num() > 0 && enemyHaveBeenHit)
+			if (BulletChainFragment && BulletChainFragment->RemainingChain >= 0 && VicinityTargets.Num() > 0 && enemyHaveBeenHit)
 			{
 				const int32 Index = FMath::RandRange(0, VicinityTargets.Num() - 1);
 				FMassEntityHandle NewTarget = VicinityTargets[0];

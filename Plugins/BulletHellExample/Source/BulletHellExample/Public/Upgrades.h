@@ -6,6 +6,7 @@
 #include "UObject/NoExportTypes.h"
 #include "BulletFragments.h"
 #include <MassEntityConfigAsset.h>
+#include "WeaponStatRow.h" 
 #include "Upgrades.generated.h"
 
 UCLASS(Blueprintable, BlueprintType)
@@ -28,7 +29,7 @@ public:
     int32 PierceLevel = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
-    int32 ChainLevel = 0;
+    int32 ChainLevel = 2;
 
     UFUNCTION(BlueprintCallable)
     void ResetUpgrade()
@@ -49,5 +50,29 @@ public:
         CritDamageLevel = InCritDamage;
         PierceLevel = InPierce;
         ChainLevel = InChain;
+    }
+
+    // Holds final calculated stat values
+    UPROPERTY(BlueprintReadWrite, EditAnywhere)
+    TMap<EWeaponStatType, float> FinalStats;
+
+    UFUNCTION(BlueprintCallable)
+    void SetStat(EWeaponStatType StatType, float Value)
+    {
+        FinalStats.Add(StatType, Value);
+        UE_LOG(LogTemp, Warning, TEXT("set to %f"), Value);
+    }
+
+    UFUNCTION(BlueprintCallable)
+    float GetStat(EWeaponStatType StatType) const
+    {
+        const float* Value = FinalStats.Find(StatType);
+        return Value ? *Value : 0.f;
+    }
+
+    UFUNCTION(BlueprintCallable)
+    void ClearStats()
+    {
+        FinalStats.Empty();
     }
 };

@@ -113,6 +113,6 @@ public:
 
 	UPROPERTY()
 	FBulletChainFragment BulletChainFragment;
-	UPROPERTY()//Change ReadWrite?
-		FBulletPierceFragment BulletPierceFragment;
+	UPROPERTY()
+	FBulletPierceFragment BulletPierceFragment;
 };
