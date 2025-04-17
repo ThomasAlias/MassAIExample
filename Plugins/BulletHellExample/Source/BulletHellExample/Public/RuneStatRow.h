@@ -19,4 +19,4 @@ struct FRuneStatRow : public FTableRowBase
 	// A display name for UI and localization.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Rune Stat")
 	FText DisplayName;
-};
+};//tet
