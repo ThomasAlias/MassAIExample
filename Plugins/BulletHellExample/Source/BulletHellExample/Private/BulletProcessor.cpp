@@ -25,8 +25,6 @@ void UBulletInitializerProcessor::ConfigureQueries()
 	EntityQuery.AddRequirement<FBulletCritChanceFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 	EntityQuery.AddRequirement<FBulletCritDamageFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 
-
-
 	EntityQuery.AddRequirement<FBulletPierceFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 	EntityQuery.AddRequirement<FBulletChainFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 
@@ -65,6 +63,7 @@ void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManag
 		const bool bHasCritChance = (BulletCritChanceFragments.GetData() != nullptr);
 		const bool bHasCritDamage = (BulletCritDamageFragments.GetData() != nullptr);
 		const int32 NumEntities = Context.GetNumEntities();
+
 		for (int EntityIdx = 0; EntityIdx < NumEntities; EntityIdx++)
 		{
 			auto& BulletFragment = BulletFragments[EntityIdx];
@@ -250,21 +249,24 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 				}
 				AvailableTargetsNumber -= consumedTargets;
 			}
+			bool DestroySelf = false;
 			if (AvailableTargetsNumber > 0 && OutOfChain && OutOfPierce)
 			{
 				EntitiesToDestroy.Add(Context.GetEntity(EntityIdx));//destroy the bullet
+				DestroySelf = true;
 			}
 			bool enemyHaveBeenHit = false;
 
 			float damageDealt = BulletDamageFragment->Damage;
-			if (BulletCritChanceFragment && FMath::FRand() < BulletCritChanceFragment->CritChance) {
+			if (BulletCritChanceFragment && FMath::FRand()*100 < BulletCritChanceFragment->CritChance) {
 				if (BulletCritDamageFragment)
 				{
-					damageDealt *= BulletCritDamageFragment->CritDamage;
+					damageDealt *= BulletCritDamageFragment->CritDamage/100;
 				}
 				else
 				{
 					damageDealt *= 2;
+					UE_LOG(LogTemp, Warning, TEXT("Crit damage X2"), BulletCritDamageFragment->CritDamage);
 				}
 			}
 
@@ -285,8 +287,8 @@ void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMass
 					}
 				}
 			}
-
-			if (BulletChainFragment && BulletChainFragment->RemainingChain >= 0 && VicinityTargets.Num() > 0 && enemyHaveBeenHit)
+			
+			if (BulletChainFragment && !OutOfChain && VicinityTargets.Num() > 0 && enemyHaveBeenHit && !DestroySelf)
 			{
 				const int32 Index = FMath::RandRange(0, VicinityTargets.Num() - 1);
 				FMassEntityHandle NewTarget = VicinityTargets[0];

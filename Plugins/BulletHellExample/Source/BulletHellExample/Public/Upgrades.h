@@ -23,7 +23,7 @@ public:
     int32 CritChanceLevel = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
-    int32 CritDamageLevel = 2;
+    int32 CritDamageLevel = 0;
     //---------------------------
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Upgrades")
     int32 PierceLevel = 0;
@@ -37,8 +37,8 @@ public:
         DamageLevel = 1;
         CritChanceLevel = 0;
         CritDamageLevel = 0;
-        PierceLevel = 1;
-        ChainLevel = 2;
+        PierceLevel = 0;
+        ChainLevel = 0;
     }
 
 
@@ -60,7 +60,6 @@ public:
     void SetStat(EWeaponStatType StatType, float Value)
     {
         FinalStats.Add(StatType, Value);
-        UE_LOG(LogTemp, Warning, TEXT("set to %f"), Value);
     }
 
     UFUNCTION(BlueprintCallable)

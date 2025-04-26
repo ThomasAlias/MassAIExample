@@ -11,32 +11,35 @@ void UBulletTrait::BuildTemplate(FMassEntityTemplateBuildContext& BuildContext, 
 {
 	BuildContext.AddFragment(FConstStructView::Make(BulletFragment));
 	BuildContext.AddTag<FBulletTag>();
-	if (UBulletHellGameInstance* GI = Cast<UBulletHellGameInstance>(World.GetGameInstance()))
+
+	if (UBulletHellGameInstance* GI = Cast<UBulletHellGameInstance>(World.GetGameInstance())) //TODO OPTI : Always add fragment even if no crit, because add all fragment existing in spell data table.
 	{
 		if (UUpgrades* Upgrades = GI->UpgradesInstance)
 		{
-			if (Upgrades->ChainLevel > 0)
+			const TMap<EWeaponStatType, float>& Stats = Upgrades->FinalStats;
+
+			if (Stats.Contains(EWeaponStatType::Chain))
 			{
 				BuildContext.AddFragment(FConstStructView::Make(BulletChainFragment));
 			}
-			if (Upgrades->PierceLevel > 0)
+			if (Stats.Contains(EWeaponStatType::Pierce))
 			{
 				BuildContext.AddFragment(FConstStructView::Make(BulletPierceFragment));
 			}
-			if (true) // we always have a dmg fragment
-			{
+
 				BuildContext.AddFragment(FConstStructView::Make(BulletDamageFragment));
-			}
-			if (Upgrades->CritChanceLevel > 0)
+
+			if (Stats.Contains(EWeaponStatType::CritChance))
 			{
 				BuildContext.AddFragment(FConstStructView::Make(BulletCritChanceFragment));
 			}
-			if (Upgrades->CritDamageLevel > 0)
+			if (Stats.Contains(EWeaponStatType::CritDamage))
 			{
 				BuildContext.AddFragment(FConstStructView::Make(BulletCritDamageFragment));
 			}
 		}
 	}
 }
+
 
 
