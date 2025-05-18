@@ -32,14 +32,6 @@
 			"Enabled": true
 		},
 		{
-			"Name": "MassWanderAI",
-			"Enabled": true
-		},
-		{
-			"Name": "BuildingManager",
-			"Enabled": true
-		},
-		{
 			"Name": "GameplayStateTree",
 			"Enabled": true
 		},

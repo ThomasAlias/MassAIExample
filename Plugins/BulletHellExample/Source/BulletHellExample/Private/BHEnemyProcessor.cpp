@@ -52,8 +52,6 @@ void UBHEnemyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutio
 			auto EntityLocation = TransformFragment.GetTransform().GetLocation();
 			MoveTargetFragment.DistanceToGoal = FVector::Dist(EntityLocation, MoveTargetFragment.Center);
 			MoveTargetFragment.Forward = (MoveTargetFragment.Center - EntityLocation).GetSafeNormal();
-
-			// Update action based on distance to goal
 			if (MoveTargetFragment.GetCurrentAction() == EMassMovementAction::Stand && MoveTargetFragment.DistanceToGoal > 50.f)
 			{
 				MoveTargetFragment.CreateNewAction(EMassMovementAction::Move, *Context.GetWorld());
@@ -85,6 +83,10 @@ void UBHEnemyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutio
 		}
 	});
 }
+
+
+
+
 
 UBHEnemyInitializer::UBHEnemyInitializer()
 {
