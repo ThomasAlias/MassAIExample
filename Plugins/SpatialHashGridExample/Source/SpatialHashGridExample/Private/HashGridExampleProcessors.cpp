@@ -12,17 +12,17 @@
 static float HalfRange = 25.f;
 
 UHashGridInitializeProcessor::UHashGridInitializeProcessor()
+	: EntityQuery(*this)
 {
 	ObservedType = FHashGridFragment::StaticStruct();
 	Operation = EMassObservedOperation::Add;
 }
 
-void UHashGridInitializeProcessor::ConfigureQueries()
+void UHashGridInitializeProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FHashGridFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddSubsystemRequirement<UHashGridSubsystem>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.RegisterWithProcessor(*this);
 }
 
 void UHashGridInitializeProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
@@ -48,17 +48,17 @@ void UHashGridInitializeProcessor::Execute(FMassEntityManager& EntityManager, FM
 }
 
 UHashGridDestroyProcessor::UHashGridDestroyProcessor()
+	: EntityQuery(*this)
 {
 	ObservedType = FHashGridFragment::StaticStruct();
 	Operation = EMassObservedOperation::Remove;
 }
 
-void UHashGridDestroyProcessor::ConfigureQueries()
+void UHashGridDestroyProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddRequirement<FHashGridFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddSubsystemRequirement<UHashGridSubsystem>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.RegisterWithProcessor(*this);
 }
 
 void UHashGridDestroyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
@@ -81,12 +81,16 @@ void UHashGridDestroyProcessor::Execute(FMassEntityManager& EntityManager, FMass
 	});
 }
 
-void UHashGridProcessor::ConfigureQueries()
+UHashGridProcessor::UHashGridProcessor()
+	: EntityQuery(*this)
+{
+}
+
+void UHashGridProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FHashGridFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddSubsystemRequirement<UHashGridSubsystem>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.RegisterWithProcessor(*this);
 }
 
 void UHashGridProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
@@ -113,14 +117,14 @@ void UHashGridProcessor::Execute(FMassEntityManager& EntityManager, FMassExecuti
 	});
 }
 
-void UHashGridQueryProcessor::Initialize(UObject& Owner)
+void UHashGridQueryProcessor::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& EntityManager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, EntityManager);
 	auto SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
 	SubscribeToSignal(*SignalSubsystem, HashGridExample::Signals::EntityQueried);
 }
 
-void UHashGridQueryProcessor::ConfigureQueries()
+void UHashGridQueryProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FHashGridFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);

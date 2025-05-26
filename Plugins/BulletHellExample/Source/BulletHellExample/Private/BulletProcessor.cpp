@@ -14,7 +14,13 @@
 #include "BHEnemyFragments.h"
 #include <BulletHellGameInstance.h>//Remove GI and place it in fragment.cpp trait buidl template
 
-void UBulletInitializerProcessor::ConfigureQueries()
+UBulletInitializerProcessor::UBulletInitializerProcessor()
+	: EntityQuery(*this)
+{
+}
+
+
+void UBulletInitializerProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddTagRequirement<FBulletTag>(EMassFragmentPresence::All);
 	EntityQuery.AddRequirement<FMassVelocityFragment>(EMassFragmentAccess::ReadWrite);
@@ -29,13 +35,12 @@ void UBulletInitializerProcessor::ConfigureQueries()
 	EntityQuery.AddRequirement<FBulletChainFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 
 	EntityQuery.AddSubsystemRequirement<UMassSignalSubsystem>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.RegisterWithProcessor(*this);
 	
 }
 
-void UBulletInitializerProcessor::Initialize(UObject& Owner)
+void UBulletInitializerProcessor::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& EntityManager)
 {
-	Super::Initialize(Owner);
+	Super::InitializeInternal(Owner, EntityManager);
 
 	UMassSignalSubsystem* SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
 	SubscribeToSignal(*SignalSubsystem, BulletHell::Signals::BulletSpawned);
@@ -106,15 +111,19 @@ void UBulletInitializerProcessor::SignalEntities(FMassEntityManager& EntityManag
 	});
 }
 
-void UBulletDestroyerProcessor::ConfigureQueries()
+UBulletDestroyerProcessor::UBulletDestroyerProcessor()
+	: EntityQuery(*this)
 {
-	EntityQuery.AddTagRequirement<FBulletTag>(EMassFragmentPresence::All);
-	EntityQuery.RegisterWithProcessor(*this);
 }
 
-void UBulletDestroyerProcessor::Initialize(UObject& Owner)
+void UBulletDestroyerProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
-	Super::Initialize(Owner);
+	EntityQuery.AddTagRequirement<FBulletTag>(EMassFragmentPresence::All);
+}
+
+void UBulletDestroyerProcessor::InitializeInternal(UObject& Owner, const TSharedRef<FMassEntityManager>& EntityManager)
+{
+	Super::InitializeInternal(Owner, EntityManager);
 
 	UMassSignalSubsystem* SignalSubsystem = UWorld::GetSubsystem<UMassSignalSubsystem>(Owner.GetWorld());
 	SubscribeToSignal(*SignalSubsystem, BulletHell::Signals::BulletDestroy);
@@ -133,7 +142,12 @@ void UBulletDestroyerProcessor::SignalEntities(FMassEntityManager& EntityManager
 	});
 }
 
-void UBulletCollisionProcessor::ConfigureQueries()
+UBulletCollisionProcessor::UBulletCollisionProcessor()
+	: EntityQuery(*this)
+{
+}
+
+void UBulletCollisionProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddTagRequirement<FBulletTag>(EMassFragmentPresence::All);
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
@@ -149,7 +163,6 @@ void UBulletCollisionProcessor::ConfigureQueries()
 	EntityQuery.AddRequirement<FBulletChainFragment>(EMassFragmentAccess::ReadWrite, EMassFragmentPresence::Optional);
 
 	EntityQuery.AddSubsystemRequirement<UBulletHellSubsystem>(EMassFragmentAccess::ReadOnly);
-	EntityQuery.RegisterWithProcessor(*this);
 }
 
 void UBulletCollisionProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)

@@ -11,7 +11,14 @@
 #include "MassAITesting/Fragments/GridFragments.h"
 #include "MassAITesting/Subsystems/GridManagerSubsystem.h"
 
-void UMatchGridHeightProcessor::ConfigureQueries()
+UMatchGridHeightProcessor::UMatchGridHeightProcessor()
+	: EntityQuery(*this) 
+{
+	//ExecutionFlags = (int32)EProcessorExecutionFlags::All;
+	//ExecutionOrder.ExecuteInGroup = UE::Mass::ProcessorGroupNames::Movement;
+}
+
+void UMatchGridHeightProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddRequirement<FGridFragment>(EMassFragmentAccess::ReadWrite);
@@ -27,8 +34,6 @@ void UMatchGridHeightProcessor::ConfigureQueries()
 	{
 		return FMassVisualizationChunkFragment::AreAnyEntitiesVisibleInChunk(MassContext) && FMassSimulationVariableTickChunkFragment::ShouldTickChunkThisFrame(MassContext);
 	});
-	
-	EntityQuery.RegisterWithProcessor(*this);
 }
 
 void UMatchGridHeightProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutionContext& Context)
