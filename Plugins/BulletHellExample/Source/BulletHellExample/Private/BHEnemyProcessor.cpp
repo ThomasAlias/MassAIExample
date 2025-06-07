@@ -19,7 +19,7 @@ UBHEnemyProcessor::UBHEnemyProcessor()
 void UBHEnemyProcessor::ConfigureQueries(const TSharedRef<FMassEntityManager>& EntityManager)
 {
 	EntityQuery.AddRequirement<FMassMoveTargetFragment>(EMassFragmentAccess::ReadWrite);
-	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadOnly);
+	EntityQuery.AddRequirement<FTransformFragment>(EMassFragmentAccess::ReadWrite);
 	EntityQuery.AddSubsystemRequirement<UBulletHellSubsystem>(EMassFragmentAccess::ReadOnly);
 	EntityQuery.AddTagRequirement<FBHEnemyTag>(EMassFragmentPresence::All);
 	
@@ -45,7 +45,7 @@ void UBHEnemyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutio
 		SCOPED_NAMED_EVENT(STAT_UpdateMoveTarget, FColor::Red);
 		auto BulletHellSubsystem = Context.GetSubsystem<UBulletHellSubsystem>();
 		auto MoveTargetFragments = Context.GetMutableFragmentView<FMassMoveTargetFragment>();
-		auto TransformFragments = Context.GetFragmentView<FTransformFragment>();
+		auto TransformFragments = Context.GetMutableFragmentView<FTransformFragment>();
 		const int32 NumEntities = Context.GetNumEntities();
 		for (int EntityIdx = 0; EntityIdx < NumEntities; EntityIdx++)
 		{
@@ -57,6 +57,12 @@ void UBHEnemyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutio
 			auto EntityLocation = TransformFragment.GetTransform().GetLocation();
 			MoveTargetFragment.DistanceToGoal = FVector::Dist(EntityLocation, MoveTargetFragment.Center);
 			MoveTargetFragment.Forward = (MoveTargetFragment.Center - EntityLocation).GetSafeNormal();
+
+			//TransformFragment.GetMutableTransform().SetRotation(MoveTargetFragment.Forward.ToOrientationQuat());//@TODO, it probably make more sense to do that in representation processor and get a readOnly fragment instead here, but I don't feel like modifying unreal files.
+			FQuat Current = TransformFragment.GetTransform().GetRotation();//@TODO optimization, declaring variable like that in MASS every time seems off, but maybe I'm wrong
+			FQuat Target = MoveTargetFragment.Forward.ToOrientationQuat();
+			FQuat NewRotation = FQuat::Slerp(Current, Target, 0.2f); 
+			TransformFragment.GetMutableTransform().SetRotation(NewRotation);
 			if (MoveTargetFragment.GetCurrentAction() == EMassMovementAction::Stand && MoveTargetFragment.DistanceToGoal > 50.f)
 			{
 				MoveTargetFragment.CreateNewAction(EMassMovementAction::Move, *Context.GetWorld());
