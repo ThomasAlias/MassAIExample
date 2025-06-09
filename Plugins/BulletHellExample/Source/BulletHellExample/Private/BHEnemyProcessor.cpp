@@ -9,6 +9,7 @@
 #include "MassExecutionContext.h"
 #include "MassNavigationFragments.h"
 #include "MassSimulationLOD.h"
+#include <NavigationSystem.h>
 
 UBHEnemyProcessor::UBHEnemyProcessor()
 	: EntityQuery(*this)
@@ -52,7 +53,32 @@ void UBHEnemyProcessor::Execute(FMassEntityManager& EntityManager, FMassExecutio
 			auto& MoveTargetFragment = MoveTargetFragments[EntityIdx];
 			auto& TransformFragment = TransformFragments[EntityIdx];
 			
-			BulletHellSubsystem->GetPlayerLocation(MoveTargetFragment.Center);
+			//BulletHellSubsystem->GetPlayerLocation(MoveTargetFragment.Center); // this lane make enemy move directly toward player
+
+			UNavigationSystemV1* NavSys = FNavigationSystem::GetCurrent<UNavigationSystemV1>(Context.GetWorld());//@todo OPTIMIZATION probably not necessary to query a new path every single time.
+			if (NavSys)
+			{
+				FPathFindingQuery Query;
+				FVector Start = TransformFragment.GetTransform().GetLocation();
+				FVector Goal;
+				BulletHellSubsystem->GetPlayerLocation(Goal);
+
+				ANavigationData* NavData = NavSys->GetDefaultNavDataInstance(FNavigationSystem::DontCreate);
+				if (NavData)
+				{
+					Query = FPathFindingQuery(nullptr, *NavData, Start, Goal);
+					FPathFindingResult Result = NavSys->FindPathSync(Query);
+
+					if (Result.IsSuccessful() && Result.Path.IsValid())
+					{
+						TArray<FNavPathPoint> PathPoints = Result.Path->GetPathPoints();
+						if (PathPoints.Num() > 1)
+						{
+							MoveTargetFragment.Center = PathPoints[1].Location; // Go to next point in path
+						}
+					}
+				}
+			}
 
 			auto EntityLocation = TransformFragment.GetTransform().GetLocation();
 			MoveTargetFragment.DistanceToGoal = FVector::Dist(EntityLocation, MoveTargetFragment.Center);
